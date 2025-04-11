@@ -1,0 +1,12 @@
+to remove brand brief from local storage: localStorage.removeItem('savedBrandBrief')
+
+to clear local storage: localStorage.clear()
+
+to check if local storage is empty: localStorage.length === 0
+
+to check if local storage has a value: localStorage.getItem('savedBrandBrief') !== null
+
+
+Supabase setup:
+Enable anonymous sign in from "Authentication" > "Sing in/ up" > Anonymous sign in.
+EVERY USER WILL have the authenticated role. Watch out when writing anonymous roles
