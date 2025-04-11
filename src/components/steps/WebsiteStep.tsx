@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Button from '../Button';
 import { supabase } from "../../lib/supabaseClient";
 import { userSession } from "../../lib/constants";
@@ -13,44 +13,26 @@ const WebsiteStep: React.FC<WebsiteStepProps> = ({ onNext }) => {
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(false);
 
-  useEffect(() =>{
-    async function signInIfNeeded() {
-      
-        const {
-            data,
-            error
-        } = await supabase.auth.getSession();
-      
-        if (data.session === null) {
-          const {
-                data,
-                error
-            } = await supabase.auth.signInAnonymously();
-            localStorage.setItem(userSession, JSON.stringify(data));
-            
-        } else if (data) {
-            localStorage.setItem(userSession, JSON.stringify(data));
-        } else {
-            setIsError(true)
-        }
-        
-        console.log(data)
-    }
-
-    signInIfNeeded()
-  }, [])
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setLoading(true);
     try {
-      setLoading(true);
-      const {
-            data,
-            error
-        } = await supabase.auth.getSession();
-      
-      await supabase.from('email-sequences').insert({ user_id: data.session.user.id, website: url });
-      
+      let sessionData = await supabase.auth.getSession();
+
+      if (!sessionData.data.session) {
+        const { data, error } = await supabase.auth.signInAnonymously();
+        if (error) throw error;
+        sessionData.data.session = data.session;
+        localStorage.setItem(userSession, JSON.stringify(data));
+      } else if (sessionData.data) {
+        localStorage.setItem(userSession, JSON.stringify(sessionData.data));
+      } else {
+        throw new Error('No session or error found');
+      }
+      if(!sessionData.data.session?.user.id) throw new Error("user id is undefined");
+
+      await supabase.from('email-sequences').insert({ user_id: sessionData.data.session.user.id, website: url });
+
       onNext({ url });
     } catch (err) {
       console.error("Submission error:", err);
